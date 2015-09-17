@@ -18,6 +18,7 @@ class ofxHeartbeat {
 public:
 	void	setup (string id, float heartbeatRate, bool isReceive, bool isSend);
 	void	update ();
+	void	load (string path);
 	ofEvent<string>	_onStoppedHeart;
 	ofEvent<string>	_onRestaredHeart;
 	ofEvent<bool>	_onSleep; // true == sleep, false = awake
@@ -31,15 +32,17 @@ private:
 	float	_heartbeatRate;
 	string	_id;
 
-	
+	ofxXmlSettings xml;
 	vector<TrackedHeartbeat>	_trackedHeartbeats;
 	TrackedHeartbeat*			getTrackedHeartbeat (string id);
 
 	// osc - sending
-	void			setupSending ();
-	ofxOscSender	_sender;
-	int				_port;
-	bool			_isReceive;
+	void					setupSending ();
+	//ofxOscSender			_sender;
+	vector<ofxOscSender*>	_senders;
+	vector<int>				_ports;
+	int						_port;
+	bool					_isReceive;
 
 	// osc - receiving
 	void			setupReceiving ();

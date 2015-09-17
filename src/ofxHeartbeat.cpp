@@ -7,8 +7,8 @@ void ofxHeartbeat::setup(string id, float heartbeatRate, bool isReceive, bool is
 	 _isReceive = isReceive;
 	 _isSend = isSend;
 
+	 load("heartbeatSettings.xml");
 	 // OSC
-	 _port = PORT;
 	 if (_isSend)
 		setupSending();
 	 if (_isReceive)
@@ -17,13 +17,20 @@ void ofxHeartbeat::setup(string id, float heartbeatRate, bool isReceive, bool is
 
 void ofxHeartbeat::setupSending () {
 	// TODO : Set up multicast - currently requires making changes to ofxOSC
-	_sender.setup(BROADCAST_ADDRESS, PORT);
-	cout << "listening for osc heartbeat messages on port " << PORT << "\n";
+	if (_ports.size() > 0) {
+		for (int i=0 ; i<_ports.size();i++) {
+			ofxOscSender* newSender = new ofxOscSender;
+			int port = _ports.at(i);
+			newSender->setup(BROADCAST_ADDRESS,_ports.at(i));
+			_senders.push_back(newSender);
+		}
+	} else _isSend = false;
 }
 
 void ofxHeartbeat::setupReceiving () {
-	_receiver.setup(PORT);
+	_receiver.setup(_port);
 	_current_msg_string = 0;
+	cout << "listening for osc heartbeat messages on port " << _port << "\n";
 }
 
 void ofxHeartbeat::update() {
@@ -71,7 +78,10 @@ void ofxHeartbeat::sendHeartbeat() {
 	msg.setAddress("/heartbeat");
 	msg.addStringArg(_id);
 
-	_sender.sendMessage(msg);
+	// send to all senders
+	for (int i=0; i< _senders.size(); i++) {
+		_senders.at(i)->sendMessage(msg);
+	}
 }
 
 void ofxHeartbeat::registerHeartbeat (string id, float ageLimit) {
@@ -154,6 +164,27 @@ void ofxHeartbeat::updateReceiveOSC () {
 	}
 }
 
+void ofxHeartbeat::load (string path) {
+	bool isLoaded = xml.load(path);
+	if (isLoaded) {
+		// load receive port
+		int port = xml.getValue("settings:receivePort",0);
+		_port = port;
+
+		// load send ports
+		_ports.clear();
+		xml.pushTag("settings");
+		xml.pushTag("sendPorts");
+
+		int numPorts = xml.getNumTags("port");
+		for (int i=0; i< numPorts; i++) {
+			int port = xml.getValue("port",0,i);
+			_ports.push_back(port);
+		}
+		xml.popTag(); // pop sendPorts
+		xml.popTag(); // pop settings
+	}
+}
 
 TrackedHeartbeat* ofxHeartbeat::getTrackedHeartbeat (string id) {
 	for (int i=0; i<_trackedHeartbeats.size();i++) {
