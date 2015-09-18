@@ -1,13 +1,15 @@
 #include "ofxHeartbeat.h"
 
-void ofxHeartbeat::setup(string id, float heartbeatRate, bool isReceive, bool isSend) {
+void ofxHeartbeat::setup(string id, float heartbeatRate, bool isSend, bool isReceive) {
 	 _age = 0;
 	 _heartbeatRate = heartbeatRate;
 	 _id = id;
 	 _isReceive = isReceive;
 	 _isSend = isSend;
 
+	 // Loads sending port(s) and receiving port
 	 load("heartbeatSettings.xml");
+
 	 // OSC
 	 if (_isSend)
 		setupSending();
@@ -21,16 +23,16 @@ void ofxHeartbeat::setupSending () {
 		for (int i=0 ; i<_ports.size();i++) {
 			ofxOscSender* newSender = new ofxOscSender;
 			int port = _ports.at(i);
-			newSender->setup(BROADCAST_ADDRESS,_ports.at(i));
+			newSender->setup(_broadcastAddress,_ports.at(i));
 			_senders.push_back(newSender);
 		}
 	} else _isSend = false;
 }
 
 void ofxHeartbeat::setupReceiving () {
-	_receiver.setup(_port);
+	_receiver.setup(_receivePort);
 	_current_msg_string = 0;
-	cout << "listening for osc heartbeat messages on port " << _port << "\n";
+	cout << "listening for osc heartbeat messages on port " << _receivePort << "\n";
 }
 
 void ofxHeartbeat::update() {
@@ -52,6 +54,7 @@ void ofxHeartbeat::update() {
 			_trackedHeartbeats[i].age += ofGetLastFrameTime();
 		}
 
+		// check for heartbeat messages
 		updateReceiveOSC();
 
 		// check for stopped hearts
@@ -168,8 +171,10 @@ void ofxHeartbeat::load (string path) {
 	bool isLoaded = xml.load(path);
 	if (isLoaded) {
 		// load receive port
-		int port = xml.getValue("settings:receivePort",0);
-		_port = port;
+		_receivePort = xml.getValue("settings:receivePort",0);
+
+		// load broadcast address
+		_broadcastAddress = xml.getValue("settings::broadcastAddress","192.168.1.255");
 
 		// load send ports
 		_ports.clear();
@@ -183,7 +188,8 @@ void ofxHeartbeat::load (string path) {
 		}
 		xml.popTag(); // pop sendPorts
 		xml.popTag(); // pop settings
-	}
+	} else 
+		cout<< "[ERROR] Heartbeart - cannot load heartbeatSettings.xml" << endl;
 }
 
 TrackedHeartbeat* ofxHeartbeat::getTrackedHeartbeat (string id) {
@@ -192,4 +198,16 @@ TrackedHeartbeat* ofxHeartbeat::getTrackedHeartbeat (string id) {
 			return &_trackedHeartbeats[i];
 	}
 	return NULL;
+}
+
+void ofxHeartbeat::sendSleepMessage (string id, bool state) {
+	ofxOscMessage msg;
+	msg.setAddress("/sleep");
+	msg.addStringArg(id);
+	msg.addIntArg(state);
+
+	// send to all senders
+	for (int i=0; i< _senders.size(); i++) {
+		_senders.at(i)->sendMessage(msg);
+	}
 }

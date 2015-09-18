@@ -1,0 +1,6 @@
+<settings>
+    <receivePort>8010</receivePort>
+    <sendPorts>
+		<port>8011</port>
+    </sendPorts>
+</settings>

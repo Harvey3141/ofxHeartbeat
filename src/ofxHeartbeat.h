@@ -3,8 +3,6 @@
 #include "ofxOsc.h"
 #include "ofxXmlSettings.h"
 
-#define BROADCAST_ADDRESS "192.168.1.255"
-#define PORT 9010
 #define NUM_MSG_STRINGS 20
 
 struct TrackedHeartbeat {
@@ -16,9 +14,11 @@ struct TrackedHeartbeat {
 
 class ofxHeartbeat {
 public:
-	void	setup (string id, float heartbeatRate, bool isReceive, bool isSend);
+	void	setup (string id, float heartbeatRate, bool isSend, bool isReceive);
 	void	update ();
 	void	load (string path);
+	void	sendSleepMessage (string id, bool state);
+
 	ofEvent<string>	_onStoppedHeart;
 	ofEvent<string>	_onRestaredHeart;
 	ofEvent<bool>	_onSleep; // true == sleep, false = awake
@@ -38,11 +38,11 @@ private:
 
 	// osc - sending
 	void					setupSending ();
-	//ofxOscSender			_sender;
 	vector<ofxOscSender*>	_senders;
 	vector<int>				_ports;
-	int						_port;
+	int						_receivePort;
 	bool					_isReceive;
+	string					_broadcastAddress;
 
 	// osc - receiving
 	void			setupReceiving ();
