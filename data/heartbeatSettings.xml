@@ -1,4 +1,5 @@
 <settings>
+    <broadcastAddress>192.168.1.255</broadcastAddress>
     <receivePort>8010</receivePort>
     <sendPorts>
 		<port>8011</port>
