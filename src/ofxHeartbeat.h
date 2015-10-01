@@ -15,9 +15,10 @@ struct TrackedHeartbeat {
 class ofxHeartbeat {
 public:
 	void	setup (string id, float heartbeatRate, bool isSend, bool isReceive);
-	void	update ();
+	void	update (ofEventArgs& args);
 	void	load (string path);
 	void	sendSleepMessage (string id, bool state);
+	void	registerHeartbeat (string id, float ageLimit);
 
 	ofEvent<string>	_onStoppedHeart;
 	ofEvent<string>	_onRestaredHeart;
@@ -26,7 +27,6 @@ public:
 private:
 	void	sendHeartbeat ();
 	void	receiveHeartbeat (string id);
-	void	registerHeartbeat (string id, float ageLimit);
 	void	updateReceiveOSC ();
 	float	_age;
 	float	_heartbeatRate;

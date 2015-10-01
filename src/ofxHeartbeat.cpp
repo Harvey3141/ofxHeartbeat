@@ -10,6 +10,8 @@ void ofxHeartbeat::setup(string id, float heartbeatRate, bool isSend, bool isRec
 	 // Loads sending port(s) and receiving port
 	 load("heartbeatSettings.xml");
 
+	 ofAddListener(ofEvents().update, this, &ofxHeartbeat::update);		
+
 	 // OSC
 	 if (_isSend)
 		setupSending();
@@ -25,6 +27,7 @@ void ofxHeartbeat::setupSending () {
 			int port = _ports.at(i);
 			newSender->setup(_broadcastAddress,_ports.at(i));
 			_senders.push_back(newSender);
+			cout << "Sending for osc heartbeat messages to "<< _broadcastAddress << " on port " << port << "\n";
 		}
 	} else _isSend = false;
 }
@@ -35,7 +38,7 @@ void ofxHeartbeat::setupReceiving () {
 	cout << "listening for osc heartbeat messages on port " << _receivePort << "\n";
 }
 
-void ofxHeartbeat::update() {
+void ofxHeartbeat::update(ofEventArgs& args) {
 
 	// sending heartbeat
 	if (_isSend) {
@@ -60,16 +63,16 @@ void ofxHeartbeat::update() {
 		// check for stopped hearts
 		for (int i=0; i<_trackedHeartbeats.size(); i++) {
 			if (_trackedHeartbeats[i].age > _trackedHeartbeats[i].ageLimit && _trackedHeartbeats[i].coronerNotified == false) {
-				_trackedHeartbeats[i].coronerNotified = true;
 				ofNotifyEvent(_onStoppedHeart,_trackedHeartbeats[i].id);
+				_trackedHeartbeats[i].coronerNotified = true;
 			}	
 		}
 		
 		// check for resuscitated hearts
 		for (int i=0; i< _trackedHeartbeats.size(); i++) {
 			if (_trackedHeartbeats[i].age < _trackedHeartbeats[i].ageLimit && _trackedHeartbeats[i].coronerNotified == true) {
-				_trackedHeartbeats[i].coronerNotified = false;
 				ofNotifyEvent(_onRestaredHeart,_trackedHeartbeats[i].id);
+				_trackedHeartbeats[i].coronerNotified = false;
 			}	
 		}
 	}
@@ -95,6 +98,8 @@ void ofxHeartbeat::registerHeartbeat (string id, float ageLimit) {
 	newHeartbeat.coronerNotified = false;
 
 	_trackedHeartbeats.push_back(newHeartbeat);
+
+	cout << "registered new heartbeat lisitener :" << ofToString(_trackedHeartbeats.size()) << " - " << id << endl;
 }
 
 void ofxHeartbeat::receiveHeartbeat (string id) {
@@ -105,12 +110,6 @@ void ofxHeartbeat::receiveHeartbeat (string id) {
 }
 
 void ofxHeartbeat::updateReceiveOSC () {
-	// hide old messages
-	for(int i = 0; i < NUM_MSG_STRINGS; i++){
-		if(_timers[i] < ofGetElapsedTimef()){
-			_msg_strings[i] = "";
-		}
-	}
 
 	// check for waiting messages
 	while(_receiver.hasWaitingMessages()){
@@ -205,6 +204,8 @@ void ofxHeartbeat::sendSleepMessage (string id, bool state) {
 	msg.setAddress("/sleep");
 	msg.addStringArg(id);
 	msg.addIntArg(state);
+
+	cout << "Sending sleep message to " << id << ": " << ofToString(state) << endl;
 
 	// send to all senders
 	for (int i=0; i< _senders.size(); i++) {
