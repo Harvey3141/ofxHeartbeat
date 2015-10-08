@@ -212,3 +212,8 @@ void ofxHeartbeat::sendSleepMessage (string id, bool state) {
 		_senders.at(i)->sendMessage(msg);
 	}
 }
+
+void ofxHeartbeat::setIsSend (bool state) {
+	_isSend = state;
+	cout << "Heartbeat - isSend set to  " << state << endl;
+}
