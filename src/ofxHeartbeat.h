@@ -19,6 +19,7 @@ public:
 	void	load (string path);
 	void	sendSleepMessage (string id, bool state);
 	void	registerHeartbeat (string id, float ageLimit);
+	void	setIsSend (bool state);
 
 	ofEvent<string>	_onStoppedHeart;
 	ofEvent<string>	_onRestaredHeart;
@@ -41,7 +42,7 @@ private:
 	vector<ofxOscSender*>	_senders;
 	vector<int>				_ports;
 	int						_receivePort;
-	bool					_isReceive;
+	bool					_isSend;
 	string					_broadcastAddress;
 
 	// osc - receiving
@@ -50,5 +51,5 @@ private:
 	int				_current_msg_string;
 	string			_msg_strings[NUM_MSG_STRINGS];
 	float			_timers[NUM_MSG_STRINGS];
-	bool			_isSend;
+	bool					_isReceive;
 };
