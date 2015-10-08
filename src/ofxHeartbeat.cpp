@@ -27,7 +27,7 @@ void ofxHeartbeat::setupSending () {
 			int port = _ports.at(i);
 			newSender->setup(_broadcastAddress,_ports.at(i));
 			_senders.push_back(newSender);
-			cout << "Sending for osc heartbeat messages to "<< _broadcastAddress << " on port " << port << "\n";
+			cout << "broadcasting heartbeat messages on "<< _broadcastAddress << " to port " << port << "\n";
 		}
 	} else _isSend = false;
 }
@@ -35,7 +35,7 @@ void ofxHeartbeat::setupSending () {
 void ofxHeartbeat::setupReceiving () {
 	_receiver.setup(_receivePort);
 	_current_msg_string = 0;
-	cout << "listening for osc heartbeat messages on port " << _receivePort << "\n";
+	cout << "listening for heartbeat messages on port " << _receivePort << "\n";
 }
 
 void ofxHeartbeat::update(ofEventArgs& args) {
