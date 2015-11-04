@@ -52,4 +52,8 @@ private:
 	string			_msg_strings[NUM_MSG_STRINGS];
 	float			_timers[NUM_MSG_STRINGS];
 	bool					_isReceive;
+
+	// logging
+	ofFile	_logFile;
+	void	logSleep (bool sleepState);
 };
