@@ -130,7 +130,12 @@ void ofxHeartbeat::updateReceiveOSC () {
 			bool isSleep = m.getArgAsInt32(1);
 			if (id == _id)
 				ofNotifyEvent(_onSleep,isSleep);
-			logSleep(isSleep);
+			try {
+				logSleep(isSleep);
+			}
+			catch (exception& e) {
+				 cout << "ofxHeartbeat - logging - Standard exception: " << e.what() << endl;
+			}
 		}
 
 		else{
@@ -225,54 +230,65 @@ void ofxHeartbeat::logSleep (bool sleepState) {
 
 	if (file) {
 		ofBuffer buffer = file.readToBuffer();  
-	
+		bool requireNewLine = false;
 		// get last line
 		string currentLine;  
 		int lines = 0;
 		while (! buffer.isLastLine()) {  
 			currentLine = buffer.getNextLine();
 			lines ++;
-		}  
+		}
 		buffer.resetLineReader();
 
-		// date, sleep count, wake count
-		vector<string> splitString;
-		splitString = ofSplitString(currentLine, ",");
+		if (!currentLine.empty()) {
+			// date, sleep count, wake count
+			vector<string> splitString;
+			splitString = ofSplitString(currentLine, ",");
 
-		// get parameters
-		string bufferDate = ofToString (splitString.at(0));
-		int bufferSleepCount = ofToInt(splitString.at(1));
-		int bufferWakeCount = ofToInt(splitString.at(2));
-
-		cout << "Heartbeat - buffer date: " << bufferDate << " , sleep count: " << bufferSleepCount
-		<< " , wake count: " << bufferWakeCount << endl;
-
-		// get current date
-		char date_c[9];
-		_strdate(date_c);
-		string date = (string)date_c;
-	
-		bool isToday;
-		(date == bufferDate) ? isToday = true : isToday = false;
-
-		// overwrite last line
-		if (isToday) {
-			ofBuffer newBuffer;
-			int newBufferLines = 0;
-			while (newBufferLines < lines -1) {  
-				newBuffer.append(buffer.getNextLine() + "\n");
-				newBufferLines ++;
+			if (splitString.size() == 4) {
+				// get parameters
+				string bufferDate = ofToString (splitString.at(0));
+				int bufferSleepCount = ofToInt(splitString.at(1));
+				int bufferWakeCount = ofToInt(splitString.at(2));
+				
+				cout << "Heartbeat - buffer date: " << bufferDate << " , sleep count: " << bufferSleepCount
+				<< " , wake count: " << bufferWakeCount << endl;
+				
+				// get current date
+				char date_c[9];
+				_strdate(date_c);
+				string date = (string)date_c;
+				
+				bool isToday;
+				(date == bufferDate) ? isToday = true : isToday = false;
+				
+				// overwrite last line
+				if (isToday) {
+					ofBuffer newBuffer;
+					int newBufferLines = 0;
+					while (newBufferLines < lines -1) {  
+						newBuffer.append(buffer.getNextLine() + "\n");
+						newBufferLines ++;
+					}
+				
+					sleepState ? bufferSleepCount += 1 : bufferWakeCount += 1;
+				
+					string newLine = date + "," + ofToString(bufferSleepCount) + "," + ofToString(bufferWakeCount) + ",";
+					newBuffer.append(newLine + "\n");
+					bool fileWritter = ofBufferToFile("heartbeatLog.csv",newBuffer);
+				} 
+				else requireNewLine = true;
 			}
-
-			sleepState ? bufferSleepCount += 1 : bufferWakeCount += 1;
-
-			string newLine = date + "," + ofToString(bufferSleepCount) + "," + ofToString(bufferWakeCount) + ",";
-			newBuffer.append(newLine + "\n");
-			bool fileWritter = ofBufferToFile("heartbeatLog.csv",newBuffer);
+			else requireNewLine = true;
 		}
+		else requireNewLine = true;
 
-		// append to new line with current date
-		else {
+		if (requireNewLine) {
+			// get current date
+			char date_c[9];
+			_strdate(date_c);
+			string date = (string)date_c;
+
 			if (sleepState) {
 				string line = date + ",1,0,";
 				buffer.append(line + "\n");
